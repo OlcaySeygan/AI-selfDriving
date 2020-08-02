@@ -21,6 +21,16 @@ class NeuralNetwork {
 			layer.connectTo(this.layers[i + 1])
 		}
 
+		if (config.tags) {
+			let layer = this.layers[this.layers.length - 1]
+			for (let i = 0; i < layer.perceptrons.length; i++) {
+				const perceptron = layer.perceptrons[i]
+				perceptron.tag = config.tags[i]
+			}
+		}
+
+		this.softmax = config.softmax ? config.softmax : false
+		this.sort = config.sort ? config.sort : false
 
 		this.fitness = 0;
 	}
@@ -51,7 +61,29 @@ class NeuralNetwork {
 		let len = layer.perceptrons.length
 		for (let i = 0; i < len; i++) {
 			const perceptron = layer.perceptrons[i];
-			outputs.push(perceptron.activatedValue())
+			outputs.push({
+				tag: perceptron.tag,
+				value: perceptron.activatedValue()
+			})
+		}
+		if (this.softmax) {
+			let sum = 0
+			for (let i = 0; i < len; i++) {
+				sum += outputs[i].value
+			}
+			for (let i = 0; i < len; i++) {
+				outputs[i].value /= sum
+			}
+		}
+
+		if (this.sort) {
+			outputs.sort(function (a, b) {
+				if (a.value < b.value)
+					return 1
+				else if (a.value > b.value)
+					return -1
+				return 0
+			})
 		}
 		return outputs
 	}
@@ -191,6 +223,7 @@ class Perceptron {
 		this.error = 0
 		this.desiredValue = null
 		this.activation = 'identity'
+		this.tag = ''
 		this.id = Math.random().toString(36).substr(2, 9)
 	}
 
