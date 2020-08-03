@@ -1,6 +1,7 @@
 class Car {
   constructor(config) {
     this.speed = 0
+    this.turnSpeed = config.turnSpeed ? config.turnSpeed : 4
     this.maxSpeed = config.maxSpeed ? config.maxSpeed : 5
     this.pos = createVector(config.x, config.y)
     this.vel = createVector()
@@ -98,9 +99,26 @@ class Car {
   }
 
   speedUp(backward = false) {
-    this.speed += backward ? -this.acc : this.acc
+    this.speed += (backward ? -this.acc : this.acc) * dt
   }
   speedDown() {
     this.speed -= this.brk
+  }
+
+  forward() {
+    this.speed += this.acc * dt
+  }
+  backward() {
+    this.speed -= this.acc * dt
+  }
+  turnLeft() {
+    this.steerAngle += this.turnSpeed * dt
+  }
+  turnRight() {
+    this.steerAngle -= this.turnSpeed * dt
+  }
+
+  applySteer(angle) {
+    this.steerAngle += angle * .75
   }
 }

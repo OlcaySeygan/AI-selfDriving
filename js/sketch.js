@@ -4,15 +4,19 @@ let target
 
 let nn
 
-let w = 0, h = 0
+let w = 0,
+  h = 0,
+  fr = 60,
+  dt
 
 function setup() {
   w = windowWidth
   h = windowHeight
   createCanvas(w, h)
-  start = createVector(300, 50)
-  target = createVector(200, 350)
-  car = new Car({ x: 100, y: 100, maxSpeed: 3, maxSteerAngle: 60 })
+  frameRate(fr)
+  start = createVector(w / 2, 50)
+  target = createVector(w / 2, 350)
+  car = new Car({ x: w / 2, y: 100, maxSpeed: 2, maxSteerAngle: 30 })
 
   nn = new NeuralNetwork({
     units: [1, 10, 1],
@@ -34,8 +38,8 @@ function setup() {
       [1]
     ],
     outputs: [
-      [0],
-      [.25],
+      [1],
+      [1],
       [1],
       [1],
       [1]
@@ -47,29 +51,36 @@ function setup() {
 }
 
 function update() {
-  let angle = (abs(atan2(target.x - car.backWheel.x, target.y - car.backWheel.y)) - abs(atan2(car.frontWheel.x - car.backWheel.x, car.frontWheel.y - car.backWheel.y)))
-  // let angle = (atan2(target.x - car.backWheel.x, target.y - car.backWheel.y) - atan2(car.frontWheel.x - car.backWheel.x, car.frontWheel.y - car.backWheel.y))
+  dt = deltaTime / fr
 
-  if (angle > 0)
-    car.steerAngle = angle
-  else
-    car.steerAngle = -angle
+  let relative = p5.Vector.sub(target, car.frontWheel)
+  let carAngle = car.heading
+  let targetAngle = atan2(target.x - car.frontWheel.x, target.y - car.frontWheel.y)
+  let angle = targetAngle - carAngle
+  // if (angle < 0)
+  //   car.turnRight()
+  // else
+  //   car.turnLeft()
+  car.applySteer(angle)
 
-  if (keyIsDown(65)) { // A
-    car.steerAngle += .08
-  } else if (keyIsDown(68)) { // D
-    car.steerAngle -= .08
-  } else {
-    // car.steerAngle = car.steerAngle * .1
-  }
+  strokeWeight(2)
+  stroke(0, 0, 255)
+  line(car.frontWheel.x, car.frontWheel.y, car.frontWheel.x + relative.x, car.frontWheel.y + relative.y)
+  stroke(255, 0, 0)
+  line(car.frontWheel.x, car.frontWheel.y + relative.y, car.frontWheel.x + relative.x, car.frontWheel.y + relative.y)
+  stroke(0, 255, 0)
+  line(car.frontWheel.x, car.frontWheel.y, car.frontWheel.x, car.frontWheel.y + relative.y)
+
+  stroke(0)
+  strokeWeight(1)
 
   if (keyIsDown(32)) { // SPACE
     car.speed += -car.speed * .1
   } else {
     if (keyIsDown(87)) { // W
-      car.speedUp()
+      car.forward()
     } else if (keyIsDown(83)) { // S
-      car.speedUp(true)
+      car.backward()
     } else {
       car.speed += -car.speed * .01
     }
@@ -81,11 +92,11 @@ function update() {
   }
 
 
-  let dis = (car.frontWheel.dist(target) / start.dist(target))
-  let results = nn.predict([dis])
-  let tag = results[0].tag
-  let value = results[0].value
-  car.speed = value * car.maxSpeed
+  // let dis = (car.frontWheel.dist(target) / start.dist(target))
+  // let results = nn.predict([dis])
+  // let tag = results[0].tag
+  // let value = results[0].value
+  // car.speed = value * car.maxSpeed
   car.update()
 }
 
